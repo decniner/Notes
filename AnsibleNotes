@@ -1,0 +1,244 @@
+Devices that requires to be set up and configure to our liking. 
+
+    Speakers that have to connect to internet
+    Smart lights from a variety of Vendors
+    Traditional cellphone and accessories
+    Tablets and computers
+
+        We will need tools in installing software, installing utilities and administration.  
+        That is when Ansible comes in.  It can be used to configure just about anything...
+
+
+# Manual Commands
+
+    # create a git repository 
+    git init
+
+    # add a file
+    touch a.txt
+
+    # add a file to git that can be committed
+    git add a.txt
+
+    # get git status
+    git status
+
+    # commit a file
+    git commit -ma "add a.txt" 
+
+    # create account for git to attach on your commit
+    get config --global user.name "Den Sanchez"
+    get config --global --add user.email "decniner@gmail.com"
+
+    # get git log
+    git log # you'll see author name and email address
+
+    # dump contents of gitconfig
+    bat ~/.gitconfig
+
+
+# Using re-usable shell scripts
+
+    # man page for git config
+    man git-config
+
+    #create a shell script
+    touch my-git-config.sh
+
+    # open to edit
+    code .
+
+        my-git-config.sh
+
+            get config --global --add user.email "decniner@gmail.com"
+            get config --global user.name "Den Sanchez"
+
+    # make script executable
+    chmod +x my-git-config.sh
+
+    # run the script
+    ./my-git-config.sh
+
+    # global configuration has been set, to check and dump out what global conguration we have...
+    git config --global --list # passed the list flag just to dump out whatever configuration we have globally
+
+    # look at the ./gitconfig file
+    cat ~/.gitconfig 
+
+    # remove gitconfig file
+    rm ~/.gitconfig 
+
+    # test your script by running it, this should set the global configuration values
+    ./my-git-config.sh
+
+    # create a file called b.txt
+    touch b.txt
+
+    # add the file to git repo
+    git add b.txt
+
+    # show the new file in git
+    git status
+
+    # commit the file
+    git commit -m "added b.txt"
+
+    # get git log
+    git log
+
+    # now we have a scipt that we can use to automate the process
+
+    # print the shell script (bat is a script or text editor)
+    bat my-git-config.sh
+
+    # or use cat or vs code
+    cat my-git-config.sh
+    code my-git-config.sh
+
+
+# Using Ansible
+    
+    # Ansible helps describe or declare the desired state of a device
+
+    # get pip version
+    pip --version
+
+    # upgrade pip
+    pip install -U pip 
+
+    # instal ansible
+    pip install ansible
+
+    # install ansible base
+    sudo apt install ansible-base
+
+    # get outdated version of package
+    pip list --outdated
+
+    # get outdated version of package and its pre-releases 
+    pip list --outdated --pre
+
+    # update ansible
+    pip install -U ansible
+
+        # NiceToRead : Ansible porting guides and documentation - shows major changes and releases
+        # docs.ansible.com
+
+        # Ansible Architechture Benefits
+        
+        # it is centrally executed
+        # reaches out to other machines (managed nodes)
+        # only need to install latest version on a control machines or central node
+        # connect to any environment like windows, container (i.e. docker), linux and pods (i.e. kubectl)
+                    
+        # Lookup ansible documentation, great way to help learn on the ply about ansible capabilities 
+        ansible-doc -t connection -l # list connection plugin
+        ansible-doc --type connection --list
+
+        # ansible add-hoc command
+    
+            # ansible add-hoc command Define and run a single task 'playbook' against a set of hosts
+            
+                # get ansible related files and folders (ansible is the ad-hoc command)
+                ansible <tab>
+
+                # help for ad-hoc ansible command
+                ansible -h
+
+                # help for ad-hoc ansible command
+                ansible-playbook -h
+
+                # ansible modules by category
+                https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html
+
+                # copy a gitconfig file as master.gitconfig file
+                cp ~/.gitconfig master.gitconfig
+
+                    # using ansible ad-hoc command to copy master.gitconfig to localhost's home directory
+                    ansible -m copy -a "src=master.gitconfig dest=~/.gitconfig" localhost
+
+
+    
+    # Understanding idempotence modules (i.e. copy module)
+
+        # Most Ansible modules (not all) has something that can be re-ran and lead to the same final result - that is called idempotent.
+        # If we already have the file, nothing will change, but if the content of the file has changed (i.e. user name in the file gets deleted), 
+        # we can modify it so that the missing or deleted entry is restored by using our master.gitconfig and the copy file module 
+        # A drift is this general concept of the files or resources on a machine or environment drifting over time from where we want them to be.  
+        # Thanks to Ansible's focus on idempotence, we don't have to worry too much because it can help us handle that scenario as well.  it can help us figure out if a resource or file has changed and if so, put it back to where it belongs.
+
+            # After deleting name in ~/.gitconfig file, ansible copy module restores the missing name using below command
+            ansible -m copy -a "src=master.gitconfig dest=~/.gitconfig" localhost
+            
+                # output
+                [WARNING]: No inventory was parsed, only implicit localhost is available
+                localhost | CHANGED => {
+                    "changed": true, 
+                    "checksum": "e1512f95dd36c9298995616f8187abef5d9f17c3",
+                    "dest": "/home/den/.gitconfig",
+                    "gid": 1000,
+                    "group": "den",
+                    "md5sum": "c406bf2eb15b5ac8057b03d98ea3b76b",
+                    "mode": "0664",
+                    "owner": "den",
+                    "size": 54,
+                    "src": "/home/den/.ansible/tmp/ansible-tmp-1645271765.8167968-74008-339532681345/source",
+                    "state": "file",
+                    "uid": 1000
+                }
+
+            # After deleting first name in ~/.gitconfig file, we use the check flag to find out if any changes has been made
+            ansible -m copy -a "src=master.gitconfig dest=~/.gitconfig" --check localhost
+                            
+                # output    
+                    localhost | CHANGED => {
+                        "changed": true
+                    }
+
+            # using diff flag along with --check flag to see what changes will be made
+            ansible -m copy -a "src=master.gitconfig dest=~/.gitconfig" --check -diff localhost
+
+                # output    
+                    [WARNING]: No inventory was parsed, only implicit localhost is available
+                    --- before: /home/den/.gitconfig
+                    +++ after: /home/den/Courses/master.gitconfig
+                    @@ -1,3 +1,3 @@
+                     [user]
+                    -	name = Den
+                    +	name = Den Sanchez
+ 	                    email = decniner@gmail.com
+                    \ No newline at end of file
+
+                    localhost | CHANGED => {
+                        "changed": true
+                    }
+
+
+            # using stand alone --diff flag to apply the change and see what changes was made
+            ansible -m copy -a "src=master.gitconfig dest=~/.gitconfig" --diff localhost
+
+                # output
+                    [WARNING]: No inventory was parsed, only implicit localhost is available
+                    --- before: /home/den/.gitconfig
+                    +++ after: /home/den/Courses/master.gitconfig
+                    @@ -1,3 +1,3 @@
+                     [user]
+                    -	name = Den
+                    +	name = Den Sanchez
+ 	                    email = decniner@gmail.com
+                    \ No newline at end of file
+
+                    localhost | CHANGED => {
+                        "changed": true,
+                        "checksum": "e1512f95dd36c9298995616f8187abef5d9f17c3",
+                        "dest": "/home/den/.gitconfig",
+                        "gid": 1000,
+                        "group": "den",
+                        "md5sum": "c406bf2eb15b5ac8057b03d98ea3b76b",
+                        "mode": "0664",
+                        "owner": "den",
+                        "size": 54,
+                        "src": "/home/den/.ansible/tmp/ansible-tmp-1645273093.8663416-75400-109515721778724/source",
+                        "state": "file",
+                        "uid": 1000
+                    }
